@@ -1,6 +1,7 @@
 package com.iridium.iridiumskyblock.listeners;
 
 import com.iridium.iridiumskyblock.IridiumSkyblock;
+import com.iridium.iridiumskyblock.configs.Schematics;
 import com.iridium.iridiumskyblock.database.Island;
 import com.iridium.iridiumskyblock.database.User;
 import org.bukkit.Bukkit;
@@ -96,7 +97,9 @@ public class PlayerPortalListener implements Listener {
 
         if (fromWorld.getName().equals(overworld)) {
             World target = Bukkit.getWorld(nether);
-            return target == null ? null : calculateDestination(from, island, target);
+            if (target == null) return null;
+            ensureNetherIslandExists(island, target);
+            return calculateDestination(from, island, target);
         }
 
         if (fromWorld.getName().equals(nether)) {
@@ -105,6 +108,80 @@ public class PlayerPortalListener implements Listener {
         }
 
         return null;
+    }
+
+    private void ensureNetherIslandExists(Island island, World netherWorld) {
+        Location center = island.getCenter(netherWorld);
+        // Check if island exists by looking at the center block
+        if (center.getBlock().getType().isAir()) {
+            // Island doesn't exist, try to paste it
+            Bukkit.getScheduler().runTask(IridiumSkyblock.getInstance(), () -> {
+                try {
+                    // Get the island's schematic config
+                    IridiumSkyblock.getInstance()
+                            .getIslandManager()
+                            .getTeamViaID(island.getId())
+                            .ifPresent(team -> {
+                                // Find which schematic this island uses
+                                // Since we can't easily determine the exact schematic,
+                                // we'll regenerate using the default schematic
+                                Schematics.SchematicConfig schematic = IridiumSkyblock.getInstance()
+                                        .getSchematics()
+                                        .schematics
+                                        .values()
+                                        .stream()
+                                        .findFirst()
+                                        .orElse(null);
+
+                                if (schematic != null && schematic.nether != null) {
+                                    IridiumSkyblock.getInstance()
+                                            .getSchematicManager()
+                                            .pasteSchematic(island, schematic.nether, netherWorld);
+                                    IridiumSkyblock.getInstance().getLogger()
+                                            .info("Auto-generated missing nether island for " + island.getName());
+                                }
+                            });
+                } catch (Exception e) {
+                    IridiumSkyblock.getInstance().getLogger()
+                            .warning("Failed to auto-generate nether island: " + e.getMessage());
+                }
+            });
+        }
+    }
+
+    private void ensureEndIslandExists(Island island, World endWorld) {
+        Location center = island.getCenter(endWorld);
+        // Check if island exists by looking at the center block
+        if (center.getBlock().getType().isAir()) {
+            // Island doesn't exist, try to paste it
+            Bukkit.getScheduler().runTask(IridiumSkyblock.getInstance(), () -> {
+                try {
+                    IridiumSkyblock.getInstance()
+                            .getIslandManager()
+                            .getTeamViaID(island.getId())
+                            .ifPresent(team -> {
+                                Schematics.SchematicConfig schematic = IridiumSkyblock.getInstance()
+                                        .getSchematics()
+                                        .schematics
+                                        .values()
+                                        .stream()
+                                        .findFirst()
+                                        .orElse(null);
+
+                                if (schematic != null && schematic.end != null) {
+                                    IridiumSkyblock.getInstance()
+                                            .getSchematicManager()
+                                            .pasteSchematic(island, schematic.end, endWorld);
+                                    IridiumSkyblock.getInstance().getLogger()
+                                            .info("Auto-generated missing end island for " + island.getName());
+                                }
+                            });
+                } catch (Exception e) {
+                    IridiumSkyblock.getInstance().getLogger()
+                            .warning("Failed to auto-generate end island: " + e.getMessage());
+                }
+            });
+        }
     }
 
     /* ==================== END ==================== */
@@ -140,9 +217,8 @@ public class PlayerPortalListener implements Listener {
         World target = Bukkit.getWorld(end);
         if (target == null) return null;
 
-        Location loc = island.getCenter(target).clone();
-        loc.setY(64);
-        return loc;
+        ensureEndIslandExists(island, target);
+        return calculateDestination(from, island, target);
     }
 
     /* ==================== DESTINATION ==================== */
@@ -150,6 +226,12 @@ public class PlayerPortalListener implements Listener {
     private Location calculateDestination(Location from, Island island, World targetWorld) {
         Location fromCenter = island.getCenter(from.getWorld());
         Location toCenter = island.getCenter(targetWorld);
+
+        // Check if target island has a portal - if so, spawn there
+        Location portalLocation = findPortalLocation(island, targetWorld);
+        if (portalLocation != null) {
+            return portalLocation;
+        }
 
         double dx = from.getX() - fromCenter.getX();
         double dz = from.getZ() - fromCenter.getZ();
@@ -164,21 +246,112 @@ public class PlayerPortalListener implements Listener {
         return findSafeLocation(dest, island);
     }
 
+    private Location findPortalLocation(Island island, World world) {
+        Location center = island.getCenter(world);
+        // Search around the center for portals within island bounds
+        int searchRadius = Math.min(island.getSize() / 2, 50); // Cap at 50 blocks
+
+        for (int x = -searchRadius; x <= searchRadius; x++) {
+            for (int z = -searchRadius; z <= searchRadius; z++) {
+                int blockX = center.getBlockX() + x;
+                int blockZ = center.getBlockZ() + z;
+
+                if (!island.isInIsland(blockX, blockZ)) continue;
+
+                for (int y = world.getMaxHeight() - 1; y >= world.getMinHeight(); y--) {
+                    if (world.getBlockAt(blockX, y, blockZ).getType().name().contains("PORTAL")) {
+                        // Found a portal, find safe spawn location next to it
+                        Location portalLoc = new Location(world, blockX + 0.5, y, blockZ + 0.5);
+                        Location safeSpawn = findSafeSpawnNearPortal(portalLoc, island);
+                        if (safeSpawn != null) {
+                            return safeSpawn;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private Location findSafeSpawnNearPortal(Location portalLoc, Island island) {
+        World w = portalLoc.getWorld();
+        int px = portalLoc.getBlockX();
+        int py = portalLoc.getBlockY();
+        int pz = portalLoc.getBlockZ();
+
+        // Check positions around the portal (N, S, E, W)
+        int[][] offsets = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+        for (int[] offset : offsets) {
+            int x = px + offset[0];
+            int z = pz + offset[1];
+
+            if (!island.isInIsland(x, z)) continue;
+
+            // Check at portal height and one below
+            for (int y = py; y >= py - 1; y--) {
+                if (w.getBlockAt(x, y, z).getType().isSolid()
+                        && !w.getBlockAt(x, y + 1, z).getType().isSolid()
+                        && !w.getBlockAt(x, y + 2, z).getType().isSolid()) {
+                    return new Location(w, x + 0.5, y + 1, z + 0.5);
+                }
+            }
+        }
+        return null;
+    }
+
     private Location findSafeLocation(Location loc, Island island) {
         World w = loc.getWorld();
-        int x = loc.getBlockX();
-        int z = loc.getBlockZ();
+        int centerX = loc.getBlockX();
+        int centerZ = loc.getBlockZ();
 
-        for (int y = w.getMaxHeight() - 1; y > w.getMinHeight(); y--) {
-            if (!island.isInIsland(new Location(w, x, y, z))) continue;
+        // First try the exact location
+        Location safeLoc = findSafeLocationAtXZ(w, centerX, centerZ, island);
+        if (safeLoc != null) return safeLoc;
 
+        // Search in expanding squares around the target location
+        for (int radius = 1; radius <= 5; radius++) {
+            // Top edge
+            for (int x = centerX - radius; x <= centerX + radius; x++) {
+                safeLoc = findSafeLocationAtXZ(w, x, centerZ - radius, island);
+                if (safeLoc != null) return safeLoc;
+            }
+            // Bottom edge
+            for (int x = centerX - radius; x <= centerX + radius; x++) {
+                safeLoc = findSafeLocationAtXZ(w, x, centerZ + radius, island);
+                if (safeLoc != null) return safeLoc;
+            }
+            // Left edge (excluding corners)
+            for (int z = centerZ - radius + 1; z <= centerZ + radius - 1; z++) {
+                safeLoc = findSafeLocationAtXZ(w, centerX - radius, z, island);
+                if (safeLoc != null) return safeLoc;
+            }
+            // Right edge (excluding corners)
+            for (int z = centerZ - radius + 1; z <= centerZ + radius - 1; z++) {
+                safeLoc = findSafeLocationAtXZ(w, centerX + radius, z, island);
+                if (safeLoc != null) return safeLoc;
+            }
+        }
+
+        // Fallback to island home if no safe location found
+        Location home = island.getHome();
+        if (home != null && home.getWorld().equals(w)) {
+            return home;
+        }
+
+        // Final fallback to island center at y=64
+        return island.getCenter(w).clone().add(0, 64, 0);
+    }
+
+    private Location findSafeLocationAtXZ(World w, int x, int z, Island island) {
+        if (!island.isInIsland(x, z)) return null;
+
+        for (int y = w.getMaxHeight() - 1; y >= w.getMinHeight(); y--) {
             if (w.getBlockAt(x, y, z).getType().isSolid()
                     && !w.getBlockAt(x, y + 1, z).getType().isSolid()
                     && !w.getBlockAt(x, y + 2, z).getType().isSolid()) {
                 return new Location(w, x + 0.5, y + 1, z + 0.5);
             }
         }
-
-        return island.getHome();
+        return null;
     }
 }

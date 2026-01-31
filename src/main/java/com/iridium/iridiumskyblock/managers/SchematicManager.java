@@ -97,7 +97,7 @@ public class SchematicManager {
         return CompletableFuture.runAsync(() -> completableFutures.forEach(CompletableFuture::join));
     }
 
-    private CompletableFuture<Void> pasteSchematic(Island island, Schematics.SchematicWorld schematic, World world) {
+    public CompletableFuture<Void> pasteSchematic(Island island, Schematics.SchematicWorld schematic, World world) {
         CompletableFuture<Void> completableFuture = new CompletableFuture<>();
         Location location = island.getCenter(world);
         location.add(0, schematic.islandHeight, 0);
