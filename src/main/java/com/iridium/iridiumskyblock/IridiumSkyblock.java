@@ -127,6 +127,7 @@ public class IridiumSkyblock extends IridiumTeams<Island, User> {
         }
     }
 
+
     @Override
     public void onEnable() {
         instance = this;

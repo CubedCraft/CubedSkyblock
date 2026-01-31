@@ -68,9 +68,18 @@ public class IslandRegionManager {
             ProtectedCuboidRegion region = new ProtectedCuboidRegion(regionName, min, max);
 
             // Set flags for island protection - EXIT flag prevents walking/falling out
+            region.setFlag(Flags.ENTRY, StateFlag.State.ALLOW);
+            region.setFlag(Flags.BUILD, StateFlag.State.ALLOW);
+            region.setFlag(Flags.PASSTHROUGH, StateFlag.State.ALLOW);
+            region.setFlag(Flags.INTERACT, StateFlag.State.ALLOW);
             region.setFlag(Flags.EXIT, StateFlag.State.DENY);
             // EXIT_VIA_TELEPORT allows command teleports to bypass the exit restriction
             region.setFlag(Flags.EXIT_VIA_TELEPORT, StateFlag.State.ALLOW);
+
+            region.setFlag(
+                    Flags.GAME_MODE,
+                    BukkitAdapter.adapt(org.bukkit.GameMode.SURVIVAL)
+            );
 
             // Set region owners (island members) using UUIDs
             List<User> members = IridiumSkyblock.getInstance().getTeamManager().getTeamMembers(island);
