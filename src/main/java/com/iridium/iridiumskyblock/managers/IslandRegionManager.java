@@ -130,6 +130,40 @@ public class IslandRegionManager {
                     Flags.GAME_MODE,
                     BukkitAdapter.adapt(org.bukkit.GameMode.SURVIVAL)
             );
+            //Add other properties
+            region.setFlag(Flags.OTHER_EXPLOSION, StateFlag.State.ALLOW);
+            region.setFlag(Flags.BREEZE_WIND_CHARGE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.SNOWMAN_TRAILS, StateFlag.State.ALLOW);
+            region.setFlag(Flags.ENTITY_ITEM_FRAME_DESTROY, StateFlag.State.ALLOW);
+            region.setFlag(Flags.RAVAGER_RAVAGE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.PISTONS, StateFlag.State.ALLOW);
+            region.setFlag(Flags.FIRE_SPREAD, StateFlag.State.ALLOW);
+            region.setFlag(Flags.SNOW_FALL, StateFlag.State.ALLOW);
+            region.setFlag(Flags.SNOW_MELT, StateFlag.State.ALLOW);
+            region.setFlag(Flags.ICE_FORM, StateFlag.State.ALLOW);
+            region.setFlag(Flags.ICE_MELT, StateFlag.State.ALLOW);
+            region.setFlag(Flags.FROSTED_ICE_FORM, StateFlag.State.ALLOW);
+            region.setFlag(Flags.FROSTED_ICE_MELT, StateFlag.State.ALLOW);
+            region.setFlag(Flags.MUSHROOMS, StateFlag.State.ALLOW);
+            region.setFlag(Flags.LEAF_DECAY, StateFlag.State.ALLOW);
+            region.setFlag(Flags.MYCELIUM_SPREAD, StateFlag.State.ALLOW);
+            region.setFlag(Flags.VINE_GROWTH, StateFlag.State.ALLOW);
+            region.setFlag(Flags.ROCK_GROWTH, StateFlag.State.ALLOW);
+            region.setFlag(Flags.SCULK_GROWTH, StateFlag.State.ALLOW);
+            region.setFlag(Flags.CROP_GROWTH, StateFlag.State.ALLOW);
+            region.setFlag(Flags.SOIL_DRY, StateFlag.State.ALLOW);
+            region.setFlag(Flags.CORAL_FADE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.COPPER_FADE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.WATER_FLOW, StateFlag.State.ALLOW);
+            region.setFlag(Flags.LAVA_FLOW, StateFlag.State.ALLOW);
+            region.setFlag(Flags.MOISTURE_CHANGE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.SEND_CHAT, StateFlag.State.ALLOW);
+            region.setFlag(Flags.RECEIVE_CHAT, StateFlag.State.ALLOW);
+
+
+
+
+
 
             // Set region owners (island members) using UUIDs
             List<User> members = IridiumSkyblock.getInstance().getTeamManager().getTeamMembers(island);
