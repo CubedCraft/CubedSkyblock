@@ -76,6 +76,15 @@ public class IslandRegionManager {
             // EXIT_VIA_TELEPORT allows command teleports to bypass the exit restriction
             region.setFlag(Flags.EXIT_VIA_TELEPORT, StateFlag.State.ALLOW);
 
+            // Essential gameplay flags for skyblock islands
+            region.setFlag(Flags.ITEM_PICKUP, StateFlag.State.ALLOW);
+            region.setFlag(Flags.ITEM_DROP, StateFlag.State.ALLOW);
+            region.setFlag(Flags.USE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.DAMAGE_ANIMALS, StateFlag.State.ALLOW);
+            region.setFlag(Flags.CHEST_ACCESS, StateFlag.State.ALLOW);
+            region.setFlag(Flags.RIDE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.EXP_DROPS, StateFlag.State.ALLOW);
+
             region.setFlag(
                     Flags.GAME_MODE,
                     BukkitAdapter.adapt(org.bukkit.GameMode.SURVIVAL)
