@@ -85,6 +85,47 @@ public class IslandRegionManager {
             region.setFlag(Flags.RIDE, StateFlag.State.ALLOW);
             region.setFlag(Flags.EXP_DROPS, StateFlag.State.ALLOW);
 
+            // Additional interaction flags
+            region.setFlag(Flags.PVP, StateFlag.State.ALLOW);
+            region.setFlag(Flags.SLEEP, StateFlag.State.ALLOW);
+            region.setFlag(Flags.RESPAWN_ANCHORS, StateFlag.State.ALLOW);
+            region.setFlag(Flags.TNT, StateFlag.State.ALLOW);
+            region.setFlag(Flags.PLACE_VEHICLE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.DESTROY_VEHICLE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.LIGHTER, StateFlag.State.ALLOW);
+            region.setFlag(Flags.POTION_SPLASH, StateFlag.State.ALLOW);
+            region.setFlag(Flags.ITEM_FRAME_ROTATE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.TRAMPLE_BLOCKS, StateFlag.State.ALLOW);
+            region.setFlag(Flags.FIREWORK_DAMAGE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.USE_ANVIL, StateFlag.State.ALLOW);
+            region.setFlag(Flags.USE_DRIPLEAF, StateFlag.State.ALLOW);
+            region.setFlag(Flags.WIND_CHARGE_BURST, StateFlag.State.ALLOW);
+
+            // Allow all damage types
+            region.setFlag(Flags.INVINCIBILITY, StateFlag.State.DENY);
+            region.setFlag(Flags.FALL_DAMAGE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.HEALTH_REGEN, StateFlag.State.ALLOW);
+            region.setFlag(Flags.HUNGER_DRAIN, StateFlag.State.ALLOW);
+
+            // Allow all mob interactions
+            region.setFlag(Flags.MOB_DAMAGE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.MOB_SPAWNING, StateFlag.State.ALLOW);
+            region.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.ALLOW);
+            region.setFlag(Flags.ENDER_BUILD, StateFlag.State.ALLOW);
+            region.setFlag(Flags.ENDERDRAGON_BLOCK_DAMAGE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.ENDERPEARL, StateFlag.State.ALLOW);
+            region.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.ALLOW);
+            region.setFlag(Flags.WITHER_DAMAGE, StateFlag.State.ALLOW);
+
+            // Allow vehicle interactions
+            region.setFlag(Flags.LIGHTNING, StateFlag.State.ALLOW);
+
+            // Allow block modifications
+            region.setFlag(Flags.BLOCK_BREAK, StateFlag.State.ALLOW);
+            region.setFlag(Flags.BLOCK_PLACE, StateFlag.State.ALLOW);
+            region.setFlag(Flags.ENTITY_PAINTING_DESTROY, StateFlag.State.ALLOW);
+            region.setFlag(Flags.ENTITY_ITEM_FRAME_DESTROY, StateFlag.State.ALLOW);
+
             region.setFlag(
                     Flags.GAME_MODE,
                     BukkitAdapter.adapt(org.bukkit.GameMode.SURVIVAL)
