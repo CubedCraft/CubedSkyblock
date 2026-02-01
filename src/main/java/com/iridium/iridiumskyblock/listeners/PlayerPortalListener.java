@@ -126,7 +126,7 @@ public class PlayerPortalListener implements Listener {
             // Island doesn't exist, try to paste it
             Bukkit.getScheduler().runTask(IridiumSkyblock.getInstance(), () -> {
                 try {
-                    center.getBlock().setType(Material.COBBLESTONE);
+                    center.add(0.0, 64.0, 0.0).getBlock().setType(Material.COBBLESTONE);
                 } catch (Exception e) {
                     IridiumSkyblock.getInstance().getLogger()
                             .warning("Failed to auto-generate nether island: " + e.getMessage());
@@ -142,7 +142,7 @@ public class PlayerPortalListener implements Listener {
             // Island doesn't exist, try to paste it
             Bukkit.getScheduler().runTask(IridiumSkyblock.getInstance(), () -> {
                 try {
-                    center.getBlock().setType(Material.COBBLESTONE);
+                    center.add(0.0, 64.0, 0.0).getBlock().setType(Material.COBBLESTONE);
                 } catch (Exception e) {
                     IridiumSkyblock.getInstance().getLogger()
                             .warning("Failed to auto-generate end island: " + e.getMessage());
