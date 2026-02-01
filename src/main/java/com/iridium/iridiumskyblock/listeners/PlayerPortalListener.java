@@ -6,6 +6,7 @@ import com.iridium.iridiumskyblock.database.Island;
 import com.iridium.iridiumskyblock.database.User;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -20,10 +21,13 @@ public class PlayerPortalListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerPortal(PlayerPortalEvent event) {
+        IridiumSkyblock.getInstance().getLogger().warning("The player " +event.getPlayer().getName() + " has entered the portal.");
         Player player = event.getPlayer();
         Location from = event.getFrom();
 
         if (!IridiumSkyblock.getInstance().getIslandManager().isInSkyblockWorld(from.getWorld())) {
+            IridiumSkyblock.getInstance().getLogger().warning("Player not in skyblock world, cancelling!");
+            event.setCancelled(true);
             return;
         }
 
@@ -32,7 +36,9 @@ public class PlayerPortalListener implements Listener {
                 IridiumSkyblock.getInstance().getIslandManager().getTeamViaLocation(from);
 
         if (!islandOptional.isPresent()) {
+            IridiumSkyblock.getInstance().getLogger().warning("Island optional not found!");
             event.setCancelled(true);
+            IridiumSkyblock.getInstance().getLogger().warning("Player " + player.getName() + " has no island!");
             player.sendMessage("no");
             return;
         }
@@ -42,8 +48,10 @@ public class PlayerPortalListener implements Listener {
         Location destination = null;
 
         if (event.getCause() == PlayerTeleportEvent.TeleportCause.NETHER_PORTAL) {
+            IridiumSkyblock.getInstance().getLogger().warning("Begin nether portal!!");
             destination = handleNetherPortal(event, island);
         } else if (event.getCause() == PlayerTeleportEvent.TeleportCause.END_PORTAL) {
+            IridiumSkyblock.getInstance().getLogger().warning("Begin end portal!!");
             destination = handleEndPortal(event, island);
         }
 
@@ -72,6 +80,7 @@ public class PlayerPortalListener implements Listener {
     /* ==================== NETHER ==================== */
 
     private Location handleNetherPortal(PlayerPortalEvent event, Island island) {
+
         Location from = event.getFrom();
         World fromWorld = from.getWorld();
 
@@ -117,30 +126,7 @@ public class PlayerPortalListener implements Listener {
             // Island doesn't exist, try to paste it
             Bukkit.getScheduler().runTask(IridiumSkyblock.getInstance(), () -> {
                 try {
-                    // Get the island's schematic config
-                    IridiumSkyblock.getInstance()
-                            .getIslandManager()
-                            .getTeamViaID(island.getId())
-                            .ifPresent(team -> {
-                                // Find which schematic this island uses
-                                // Since we can't easily determine the exact schematic,
-                                // we'll regenerate using the default schematic
-                                Schematics.SchematicConfig schematic = IridiumSkyblock.getInstance()
-                                        .getSchematics()
-                                        .schematics
-                                        .values()
-                                        .stream()
-                                        .findFirst()
-                                        .orElse(null);
-
-                                if (schematic != null && schematic.nether != null) {
-                                    IridiumSkyblock.getInstance()
-                                            .getSchematicManager()
-                                            .pasteSchematic(island, schematic.nether, netherWorld);
-                                    IridiumSkyblock.getInstance().getLogger()
-                                            .info("Auto-generated missing nether island for " + island.getName());
-                                }
-                            });
+                    center.getBlock().setType(Material.COBBLESTONE);
                 } catch (Exception e) {
                     IridiumSkyblock.getInstance().getLogger()
                             .warning("Failed to auto-generate nether island: " + e.getMessage());
@@ -156,26 +142,7 @@ public class PlayerPortalListener implements Listener {
             // Island doesn't exist, try to paste it
             Bukkit.getScheduler().runTask(IridiumSkyblock.getInstance(), () -> {
                 try {
-                    IridiumSkyblock.getInstance()
-                            .getIslandManager()
-                            .getTeamViaID(island.getId())
-                            .ifPresent(team -> {
-                                Schematics.SchematicConfig schematic = IridiumSkyblock.getInstance()
-                                        .getSchematics()
-                                        .schematics
-                                        .values()
-                                        .stream()
-                                        .findFirst()
-                                        .orElse(null);
-
-                                if (schematic != null && schematic.end != null) {
-                                    IridiumSkyblock.getInstance()
-                                            .getSchematicManager()
-                                            .pasteSchematic(island, schematic.end, endWorld);
-                                    IridiumSkyblock.getInstance().getLogger()
-                                            .info("Auto-generated missing end island for " + island.getName());
-                                }
-                            });
+                    center.getBlock().setType(Material.COBBLESTONE);
                 } catch (Exception e) {
                     IridiumSkyblock.getInstance().getLogger()
                             .warning("Failed to auto-generate end island: " + e.getMessage());
@@ -215,7 +182,7 @@ public class PlayerPortalListener implements Listener {
         }
 
         World target = Bukkit.getWorld(end);
-        if (target == null) return null;
+        if (target == null) return island.getHome();
 
         ensureEndIslandExists(island, target);
         return calculateDestination(from, island, target);
@@ -262,7 +229,9 @@ public class PlayerPortalListener implements Listener {
                     if (world.getBlockAt(blockX, y, blockZ).getType().name().contains("PORTAL")) {
                         // Found a portal, find safe spawn location next to it
                         Location portalLoc = new Location(world, blockX + 0.5, y, blockZ + 0.5);
+                        IridiumSkyblock.getInstance().getLogger().warning(portalLoc.toString());
                         Location safeSpawn = findSafeSpawnNearPortal(portalLoc, island);
+                        IridiumSkyblock.getInstance().getLogger().warning(safeSpawn.toString());
                         if (safeSpawn != null) {
                             return safeSpawn;
                         }
@@ -274,6 +243,7 @@ public class PlayerPortalListener implements Listener {
     }
 
     private Location findSafeSpawnNearPortal(Location portalLoc, Island island) {
+        IridiumSkyblock.getInstance().getLogger().warning("BEGIN findSafeSpawnNearPortal");
         World w = portalLoc.getWorld();
         int px = portalLoc.getBlockX();
         int py = portalLoc.getBlockY();
@@ -281,7 +251,9 @@ public class PlayerPortalListener implements Listener {
 
         // Check positions around the portal (N, S, E, W)
         int[][] offsets = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+        IridiumSkyblock.getInstance().getLogger().warning("INSTRUCTION findSafeSpawnNearPortal: Check positions around the portal (N, S, E, W)");
         for (int[] offset : offsets) {
+            IridiumSkyblock.getInstance().getLogger().warning("INSTRUCTION findSafeSpawnNearPortal: "+offset[0]+","+offset[1]+","+offset[2]);
             int x = px + offset[0];
             int z = pz + offset[1];
 
@@ -292,10 +264,12 @@ public class PlayerPortalListener implements Listener {
                 if (w.getBlockAt(x, y, z).getType().isSolid()
                         && !w.getBlockAt(x, y + 1, z).getType().isSolid()
                         && !w.getBlockAt(x, y + 2, z).getType().isSolid()) {
+                    IridiumSkyblock.getInstance().getLogger().warning("INSTRUCTION findSafeSpawnNearPortal: "+x + 0.5 + y + 1 + z + 0.5);
                     return new Location(w, x + 0.5, y + 1, z + 0.5);
                 }
             }
         }
+        IridiumSkyblock.getInstance().getLogger().warning("END findSafeSpawnNearPortal IS NULL!");
         return null;
     }
 
